@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fractal Game</title>
+    <title>Fractal</title>
     <style>
         /* Tailwind-like utility classes */
         body {
@@ -205,11 +205,10 @@
             this.autoExpand = false;
 
             this.upgrades = {
-                tokenGeneration: 0,
-                fractalComplexity: 0,
-                prestigeMultiplier: 0,
-                autoExpandEfficiency: 0,
-                renderQuality: 0
+                tokenGeneration: 1,
+                fractalComplexity: 1,
+                prestigeMultiplier: 1,
+                autoExpandEfficiency: 1
             };
 
             this.initializeEventListeners();
@@ -218,21 +217,21 @@
 
         get tokenRate() {
             const baseRate = 10 * Math.pow(this.fractalLevel, 1.2) * this.prestige;
-            const upgradeMultiplier = 1 + (this.upgrades.tokenGeneration * 0.2);
+            const upgradeMultiplier = this.upgrades.tokenGeneration;
             return Math.floor(baseRate * upgradeMultiplier);
         }
 
         get upgradeCost() {
             const baseCost = 10 * Math.pow(1.5, this.fractalLevel);
-            const complexityReduction = 1 - (this.upgrades.fractalComplexity * 0.1);
-            return Math.floor(baseCost * complexityReduction);
+            const complexityReduction = this.upgrades.fractalComplexity;
+            return Math.floor(baseCost / complexityReduction);
         }
 
         get prestigeCost() {
-            // Change: Prestige cost increases based on cumulative prestige levels
+            // Prestige cost increases based on cumulative prestige levels
             const basePrestigeCost = Math.floor(100 * (1 + this.prestige));
-            const prestigeMultiplier = 1 - (this.upgrades.prestigeMultiplier * 0.05);
-            return Math.floor(basePrestigeCost * prestigeMultiplier);
+            const prestigeMultiplier = this.upgrades.prestigeMultiplier;
+            return Math.floor(basePrestigeCost / prestigeMultiplier);
         }
 
         initializeEventListeners() {
@@ -245,7 +244,6 @@
             document.getElementById('skillPopupClose').addEventListener('click', () => this.closeSkillPopup());
             document.getElementById('skillPopupOverlay').addEventListener('click', () => this.closeSkillPopup());
 
-            this.createUpgradeButtons();
             this.createSkillButtons();
         }
 
@@ -253,34 +251,22 @@
             const skillPopupGrid = document.getElementById('skillPopupGrid');
             const skills = [
                 { 
-                    name: 'Token Generation', 
+                    name: 'Greed', 
                     type: 'tokenGeneration', 
-                    effect: '+20% Token Rate',
+                    effect: 'x1.2 Token Rate',
                     color: 'blue'
                 },
                 { 
-                    name: 'Fractal Complexity', 
+                    name: 'Efficiency', 
                     type: 'fractalComplexity', 
-                    effect: '-10% Upgrade Cost',
+                    effect: 'x0.9 Upgrade Cost',
                     color: 'green'
                 },
                 { 
-                    name: 'Prestige Multiplier', 
+                    name: 'Bargaining', 
                     type: 'prestigeMultiplier', 
-                    effect: '-5% Prestige Requirement',
+                    effect: 'x0.9 Prestige Cost',
                     color: 'purple'
-                },
-                { 
-                    name: 'Auto Expand Efficiency', 
-                    type: 'autoExpandEfficiency', 
-                    effect: '+20% Auto Expand',
-                    color: 'yellow'
-                },
-                { 
-                    name: 'Render Quality', 
-                    type: 'renderQuality', 
-                    effect: '+Fractal Detail',
-                    color: 'red'
                 }
             ];
 
@@ -291,7 +277,7 @@
                     <h3 class="flex items-center mb-2">
                         ${skill.name}
                         <span class="ml-2 text-sm text-gray-400" id="${skill.type}SkillLevel">
-                            (Level: 0)
+                            (Level: 1)
                         </span>
                     </h3>
                     <button 
@@ -319,15 +305,10 @@
             document.getElementById('skillPopupOverlay').style.display = 'none';
         }
 
-        createUpgradeButtons() {
-            // This method is now mainly for backwards compatibility
-            // The upgrade buttons are created in createSkillButtons
-            return;
-        }
-
         handleUpgrade(upgradeType) {
             if (this.skillPoints > 0) {
-                this.upgrades[upgradeType]++;
+                // Multiplicative upgrade
+                this.upgrades[upgradeType] *= 1.2;
                 this.skillPoints--;
                 this.updateDisplay();
             }
@@ -349,13 +330,12 @@
                 this.level = 1;
                 this.skillPoints = 0;
                 this.upgrades = {
-                    tokenGeneration: 0,
-                    fractalComplexity: 0,
-                    prestigeMultiplier: 0,
-                    autoExpandEfficiency: 0,
-                    renderQuality: 0
+                    tokenGeneration: 1,
+                    fractalComplexity: 1,
+                    prestigeMultiplier: 1,
+                    autoExpandEfficiency: 1
                 };
-                this.prestige *= (1.5 + this.upgrades.prestigeMultiplier * 0.1);
+                this.prestige *= (1.5 + (this.upgrades.prestigeMultiplier - 1) * 0.1);
                 this.updateDisplay();
             }
         }
@@ -377,7 +357,7 @@
 
             ctx.clearRect(0, 0, width, height);
             ctx.strokeStyle = 'white';
-            ctx.lineWidth = 1 + (this.upgrades.renderQuality * 0.5);
+            ctx.lineWidth = 1;
 
             const drawKochSnowflake = (x1, y1, x2, y2, depth) => {
                 if (depth === 0) {
@@ -407,7 +387,7 @@
             const centerX = width / 2;
             const centerY = height / 2;
 
-            const maxDepth = Math.min(this.fractalLevel, 6 + this.upgrades.renderQuality);
+            const maxDepth = Math.min(this.fractalLevel, 6);
 
             drawKochSnowflake(
                 centerX - size / 2, 
@@ -436,7 +416,7 @@
             }
 
             // Auto-expand logic
-            const autoExpandMultiplier = 1 + (this.upgrades.autoExpandEfficiency * 0.2);
+            const autoExpandMultiplier = this.upgrades.autoExpandEfficiency;
             if (this.autoExpand && this.tokens >= this.upgradeCost * autoExpandMultiplier) {
                 this.tokens -= this.upgradeCost * autoExpandMultiplier;
                 this.fractalLevel++;
@@ -455,11 +435,11 @@
             document.getElementById('levelDisplay').textContent = `Level: ${this.level}`;
             document.getElementById('skillPointsDisplay').textContent = `Skill Points: ${this.skillPoints}`;
 
-            // Update skill levels in both popup and original location
+            // Update skill levels in popup
             Object.keys(this.upgrades).forEach(upgradeName => {
                 const skillLevelElement = document.getElementById(`${upgradeName}SkillLevel`);
                 if (skillLevelElement) {
-                    skillLevelElement.textContent = `(Level: ${this.upgrades[upgradeName]})`;
+                    skillLevelElement.textContent = `(Level: ${Math.round(this.upgrades[upgradeName] * 10) / 10})`;
                 }
             });
 
